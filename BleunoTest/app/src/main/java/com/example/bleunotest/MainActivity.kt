@@ -50,6 +50,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnOnAll : Button
     private lateinit var tvInfo : TextView
 
+    private lateinit var btnFW : Button
+    private lateinit var btnBW : Button
+
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothLeScanner : BluetoothLeScanner
@@ -408,6 +411,9 @@ class MainActivity : AppCompatActivity() {
         btnGetTemper = findViewById(R.id.btnGetTemper)
         btnRead = findViewById(R.id.btnRead)
 
+        btnFW = findViewById(R.id.btnFW)
+        btnBW = findViewById(R.id.btnBW)
+
         btnOffAll = findViewById(R.id.btnOffAll)
         btnOnAll = findViewById(R.id.btnOnAll)
 
@@ -550,6 +556,15 @@ class MainActivity : AppCompatActivity() {
         }
         btnOnAll.setOnClickListener {
             _sendData("on -1")
+        }
+
+        btnFW.setOnClickListener {
+            _sendData("on 0\noff 1\non 2\noff 3")
+
+        }
+        btnBW.setOnClickListener {
+            _sendData("on 1\noff 0\non 3\noff 2")
+
         }
 
     }
