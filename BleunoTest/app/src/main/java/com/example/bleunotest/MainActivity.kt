@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothStatusCodes
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
@@ -238,7 +239,7 @@ class MainActivity : AppCompatActivity() {
                         UUID.fromString(myBlueTooth.CLIENT_CHARACTERISTIC_CONFIG_UUID) // Client Characteristic Configuration UUID
                     )
 
-                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         // API 33 이상에서는 새로운 메서드 사용
                         gatt.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
                     }
@@ -341,28 +342,35 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun _sendData(command: String) {
-//        val command = "dht11"
         mCharacteristicObj?.let { characteristic ->
-
             mBleGatt?.let { gatt ->
                 val writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                characteristic.writeType = writeType
-                characteristic.value = command.toByteArray()
-                val success = gatt.writeCharacteristic(characteristic)
+                val commandBytes = command.toByteArray()
 
-                if (success) {
-                    Log.d("MainActivity", "Command sent successfully: $command")
-                    Toast.makeText(this, "command sent: $command", Toast.LENGTH_SHORT).show()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    // Android 13 이상
+                    val status = gatt.writeCharacteristic(characteristic, commandBytes, writeType)
+                    if (status == BluetoothStatusCodes.SUCCESS) {
+                        Log.d("MainActivity", "Command sent successfully: $command")
+                    } else {
+                        Log.e("MainActivity", "Failed to send command: $command, Status: $status")
+                    }
                 } else {
-                    Log.e("MainActivity", "Failed to send command: $command")
-                    Toast.makeText(this, "failed to send command: $command", Toast.LENGTH_SHORT)
-                        .show()
+                    // Android 12 이하
+                    characteristic.value = commandBytes
+                    val success = gatt.writeCharacteristic(characteristic)
+                    if (success) {
+                        Log.d("MainActivity", "Command sent successfully: $command")
+                    } else {
+                        Log.e("MainActivity", "Failed to send command: $command")
+                    }
                 }
-            } ?: run {
-                Log.e("MainActivity", "BluetoothGatt is null")
             }
         }
     }
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
