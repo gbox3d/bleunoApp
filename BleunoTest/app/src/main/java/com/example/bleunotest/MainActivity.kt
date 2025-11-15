@@ -22,6 +22,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -72,6 +73,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var permissionLauncher : ActivityResultLauncher<Array<String>>
 
+    private lateinit var etSendCmd: EditText
+    private lateinit var btnSendCmd: Button
+
     private fun _updateDeviceList(name: String, address: String, rssi: Int) {
 
         Log.d("MainActivity", "name: $name, address: $address, rssi: $rssi")
@@ -90,8 +94,6 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             tvInfo.text = "found devices: ${mBleScannedDevices.size}"
         }
-//        //찾은 디바이스 수 표시
-//        tvInfo.text = "found devices: ${mBleScannedDevices.size}"
 
 
     }
@@ -137,14 +139,20 @@ class MainActivity : AppCompatActivity() {
         mBleGatt = device.connectGatt(this, false, mGattCallback)
     }
 
-    private fun handleReceivedData(data: ByteArray) {
-        // 데이터 처리 로직 구현
-//        Log.d("MainActivity", "Received data: ${data.joinToString()}")
-        // ByteArray를 UTF-8 문자열로 변환
-        val receivedString = data.toString(Charsets.UTF_8)
-        Log.d("MainActivity", "Received data: $receivedString")
+//    private fun handleReceivedData(data: ByteArray) {
+//        // 데이터 처리 로직 구현
+//        // Log.d("MainActivity", "Received data: ${data.joinToString()}")
+//        // ByteArray를 UTF-8 문자열로 변환
+//        val receivedString = data.toString(Charsets.UTF_8)
+//        Log.d("MainActivity", "Received data: $receivedString")
+//        runOnUiThread {
+//            tvInfo.append("\nReceived data: $receivedString")
+//        }
+//    }
+
+    private fun appendStringTvLog(txt: String) {
         runOnUiThread {
-            tvInfo.append("\nReceived data: $receivedString")
+            tvInfo.append("\n$txt")
         }
     }
 
@@ -165,6 +173,8 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "MTU change failed with status $status", Toast.LENGTH_SHORT).show()
                 }
             }
+            // 🔸 실패했으면 어차피 기본 MTU로라도 써야 하니까, 여기서 fallback으로 서비스 탐색:
+            gatt?.discoverServices()
         }
 
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
@@ -178,14 +188,16 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//                    gatt?.requestMtu(244)  // 원하는 MTU 크기 요청
-//                }
-//                else {
-//                    gatt?.discoverServices()
-//                }
 
-                gatt?.discoverServices()
+                // 🔹 여기서 바로 서비스 탐색하지 말고 MTU 먼저 요청
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    val req = gatt?.requestMtu(185)   // 원하는 MTU 값 (예: 185)
+                    Log.d("MainActivity", "requestMtu(185) called, result=$req")
+                } else {
+                    // 아주 구형 기기면 MTU negotiation 안 될 수 있으므로 바로 서비스 탐색
+                    gatt?.discoverServices()
+                }
+
 
                 runOnUiThread {
                     btnGetTemper.isEnabled = true
@@ -273,6 +285,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         //알람을 받았을떼 , notify data
+        @Deprecated("Deprecated in Java")
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic?
@@ -281,11 +294,16 @@ class MainActivity : AppCompatActivity() {
                 val data = characteristic?.value
                 if (data == null) return
                 // 수신된 데이터 처리
-                handleReceivedData(data)
+                Log.d("MainActivity", "notify : ${data.joinToString()}")
+                val _msg = "notify : ${data.toString(Charsets.UTF_8)}"
+                Log.d("MainActivity", _msg)
+                appendStringTvLog(_msg)
             }
         }
 
 
+
+        @Deprecated("Deprecated in Java")
         override fun onCharacteristicRead(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic?,
@@ -293,11 +311,12 @@ class MainActivity : AppCompatActivity() {
         ) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 val data = characteristic?.value
-                val receivedString = data?.toString(Charsets.UTF_8)
-                Log.d("MainActivity", "Received data: $receivedString")
-                runOnUiThread {
-                    tvInfo.append("\nReceived data: $receivedString")
-                }
+                if (data == null) return
+                // 수신된 데이터 처리
+                Log.d("MainActivity", "read : ${data.joinToString()}")
+                val _msg = "read : ${data.toString(Charsets.UTF_8)}"
+                Log.d("MainActivity", _msg)
+                appendStringTvLog(_msg)
             }
         }
 
@@ -426,6 +445,10 @@ class MainActivity : AppCompatActivity() {
         btnOnAll = findViewById(R.id.btnOnAll)
 
         tvInfo = findViewById(R.id.tvInfo)
+
+        etSendCmd = findViewById(R.id.sendCmd)
+        btnSendCmd = findViewById(R.id.btnSendCmd)
+
 
         btnScan.setOnClickListener { v  ->
             //TODO
@@ -574,6 +597,38 @@ class MainActivity : AppCompatActivity() {
             _sendData("on 1\noff 0\non 3\noff 2")
 
         }
+
+
+        btnSendCmd.setOnClickListener {
+            // 연결/Characteristic 체크
+            if (mBleGatt == null || mCharacteristicObj == null) {
+                Toast.makeText(this, "BLE가 연결되지 않았습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val cmd = etSendCmd.text.toString().trim()
+            if (cmd.isEmpty()) {
+                Toast.makeText(this, "보낼 명령어를 입력하세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 펌웨어가 '\n' 기준으로 명령어를 split 하므로 항상 개행 하나 붙여서 전송
+            _sendData(cmd + "\n")
+
+            // tvInfo 에 전송 내용 표시
+            tvInfo.append("\n>> $cmd")
+
+//            // (선택) 바로 read로 응답 확인도 시도
+//            val success = mBleGatt?.readCharacteristic(mCharacteristicObj)
+//            if (success == true) {
+//                Log.d("MainActivity", "Read request sent after command")
+//            } else {
+//                Log.d("MainActivity", "Failed to send read request")
+//            }
+        }
+
+
+
 
     }
 }

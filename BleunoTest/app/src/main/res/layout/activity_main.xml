@@ -1,85 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 
-    xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
 
+    android:id="@+id/main"
     android:layout_width="match_parent"
+
     android:layout_height="match_parent"
 
     android:orientation="vertical"
+    tools:context=".MainActivity">
 
-    android:id="@+id/main"
-    tools:context=".MainActivity"
-    >
     <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="scan"
         android:id="@+id/btnScan"
-        ></Button>
-    <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="connect"
-        android:id="@+id/btnConnect"
-        android:enabled="false"
-        ></Button>
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="GetTemper"
-        android:id="@+id/btnGetTemper"
-        android:enabled="false"
-        >
-    </Button>
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Read"
-        android:id="@+id/btnRead"
-        />
+        android:text="scan"></Button>
 
     <Button
+        android:id="@+id/btnConnect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="on all"
-        android:id="@+id/btnOnAll"
-        />
+        android:enabled="false"
+        android:text="connect"></Button>
+
     <Button
+        android:id="@+id/btnGetTemper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="off all"
+        android:enabled="false"
+        android:text="GetTemper"></Button>
+
+    <Button
+        android:id="@+id/btnRead"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Read" />
+
+    <Button
+        android:id="@+id/btnOnAll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="on all" />
+
+    <Button
         android:id="@+id/btnOffAll"
-        />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="off all" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation = "horizontal"
         android:gravity="center"
-        >
+        android:orientation="horizontal">
+
         <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="FW"
             android:id="@+id/btnFW"
-            />
-        <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="BW"
+            android:text="FW" />
+
+        <Button
             android:id="@+id/btnBW"
-            />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BW" />
     </LinearLayout>
 
-    <TextView
+
+    <EditText
+        android:id="@+id/sendCmd"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="about"
+        ></EditText>
+
+    <Button
+        android:id="@+id/btnSendCmd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="send cmd" />
+
+    <TextView
         android:id="@+id/tvInfo"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/black"
         android:text="info"
-        ></TextView>
+        android:textColor="#00ff00"></TextView>
 
 
 </LinearLayout>
