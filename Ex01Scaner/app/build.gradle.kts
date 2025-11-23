@@ -46,4 +46,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // 👉 Kable Core (안드로이드 단일 모듈에서 많이 쓰는 형태)
+    implementation("com.juul.kable:core:0.32.0")
 }
