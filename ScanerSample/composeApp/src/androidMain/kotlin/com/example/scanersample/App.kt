@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -24,11 +25,16 @@ import scanersample.composeapp.generated.resources.compose_multiplatform
 @Composable
 @Preview
 fun App(
-    onScanClick: (() -> Unit)? = null,
+    requestPermissions: (() -> Unit)? = null,
+    hasPermissions: (() -> Boolean)? = null,
 ) {
+
+
     MaterialTheme {
-//        var showContent by remember { mutableStateOf(false) }
+
         var message by remember { mutableStateOf("") }
+        val vm_ble: BleViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        val isScanning by vm_ble.isScanning.collectAsState()
 
         Column(
             modifier = Modifier
@@ -37,36 +43,28 @@ fun App(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Button(onClick = {
-//                showContent = !showContent
-                onScanClick?.invoke()                  // 🔹 버튼 누를 때 스캔 시작 요청
-                message = "BLE 스캔을 시작했습니다.\nLogcat을 확인하세요."
 
+            message = if (isScanning) "스캔 중.. (누르면 중지)" else "스캔 준비"
+
+            Button(onClick = {
+                if (hasPermissions?.invoke() == true) {
+                    vm_ble.toggleScan()
+                } else {
+                    requestPermissions?.invoke()
+                }
             }) {
-                Text("Start Scan")
+                Text(if (isScanning) "stop" else "start")
             }
+
             Text(
-                text =
-                    if (message.isEmpty())
-                        "아직 버튼을 누르지 않았습니다."
-                    else
-                        message,
+                text = message,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 24.dp),
                 textAlign = TextAlign.Center,
                 fontSize = 12.sp,
             )
-//            AnimatedVisibility(showContent) {
-//                val greeting = remember { Greeting().greet() }
-//                Column(
-//                    modifier = Modifier.fillMaxWidth(),
-//                    horizontalAlignment = Alignment.CenterHorizontally,
-//                ) {
-//                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-//                    Text("Compose: $greeting")
-//                }
-//            }
+
         }
     }
 }
